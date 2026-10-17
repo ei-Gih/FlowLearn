@@ -20,7 +20,7 @@ Configure somente no painel da Netlify, com escopo de Functions:
 - `AI_MODEL`: modelo usado pelo serviço de IA; padrão `gpt-4.1-mini`.
 - `RESET_WEBHOOK_URL`: serviço privado de envio do código de recuperação de senha.
 
-`DATABASE_URL` deve conter a conexão do PostgreSQL externo (pooler recomendado), configurada apenas para Functions. Se o provedor exigir um certificado raiz próprio, configure `DATABASE_CA`; a verificação de certificados permanece ativa. Nunca adicione a conexão do banco ou chaves a variáveis `VITE_*`, ao código frontend ou ao Git.
+`DATABASE_URL` contém a URI do PostgreSQL externo (pooler recomendado). A senha pode ficar separada em `DATABASE_PASSWORD`; nesse caso a URI pode manter `[YOUR-PASSWORD]`, e o servidor codifica os caracteres especiais corretamente. Marque ambos como segredo no contexto Production. No plano Legacy, se não for possível restringir o escopo a Functions, mantenha os escopos oferecidos pelo painel; o frontend não lê essas variáveis. Se o provedor exigir um certificado raiz próprio, configure `DATABASE_CA`; a verificação de certificados permanece ativa. Nunca adicione a conexão do banco ou chaves a variáveis `VITE_*`, ao código frontend ou ao Git.
 
 ## Verificação
 
