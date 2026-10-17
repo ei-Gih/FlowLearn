@@ -1,0 +1,3 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {schedule,priority} from './scheduler.mjs';
+test('intervalos avançam e erro reinicia',()=>{let c={step:0,reviews:0};for(const day of [1,3,7,14,30,60,120]){const r=schedule(c,'remembered',new Date('2026-01-01'));assert.equal(r.interval,day);c={...r,reviews:c.reviews+1};}assert.equal(schedule(c,'forgot').interval,1);assert.equal(schedule(c,'partial').interval,60);});
+test('atrasados precedem conteúdos futuros equivalentes',()=>{const c={errors:0,reviews:1};assert.ok(priority({...c,next_review:'2020-01-01'})>priority({...c,next_review:'2099-01-01'}));});

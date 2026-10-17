@@ -1,0 +1,4 @@
+export type Analysis={summary:string;translation:string;important_words:{word:string;meaning:string;example:string}[];expressions:string[];grammar_points:string[];examples:string[];difficulty:number};
+export type Content={id:string;url:string;title:string;transcript:string;category:string;level:string;tags:string[];favorite:boolean;demo:boolean;reviews:number;correct:number;errors:number;step:number;next_review:string;created_at:string;analysis:Analysis|null;history?:{id:string;rating:string;created_at:string;interval:number}[]};
+export type Profile={name:string;email:string;level:string;goal:string;daily:number;minutes:number;onboarded:boolean;created_at:string};
+export type Progress={saved:number;studied:number;reviews:number;today:number;due:number;words:number;retention:number;mastered:number;difficult:number;streak:number;week:{day:string;count:number}[];categories:{category:string;value:number}[]};
