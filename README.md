@@ -13,6 +13,10 @@ npm run dev
 
 Abra http://127.0.0.1:5173. Crie uma conta e configure seu perfil. Para versão compilada: `npm run build` e `npm start`, depois abra http://127.0.0.1:3001.
 
+## Feed vertical de vídeos
+
+A Home agora tem feed vertical com scroll snap, players de arquivos diretos, embeds oficiais de YouTube/TikTok, controles, explicações e revisão no próprio vídeo. Veja [detalhes, compatibilidade e testes](docs/video-feed.md). A migração de mídia é automática, aditiva e preserva os dados existentes.
+
 ## O que funciona
 
 - Cadastro, login, logout, sessão em cookie HttpOnly, senha com scrypt e isolamento por usuário em todas as consultas.

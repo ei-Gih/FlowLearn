@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,email TEXT UNIQUE NOT NULL,password TEXT NOT NULL,profile TEXT NOT NULL,created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,user_id TEXT REFERENCES users(id) ON DELETE CASCADE,expires TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS resets(token TEXT PRIMARY KEY,user_id TEXT REFERENCES users(id) ON DELETE CASCADE,expires TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS contents(id TEXT PRIMARY KEY,user_id TEXT REFERENCES users(id) ON DELETE CASCADE,url TEXT NOT NULL,title TEXT NOT NULL,transcript TEXT NOT NULL,analysis TEXT,category TEXT,level TEXT,tags TEXT,favorite INTEGER DEFAULT 0,demo INTEGER DEFAULT 0,step INTEGER DEFAULT 0,reviews INTEGER DEFAULT 0,correct INTEGER DEFAULT 0,errors INTEGER DEFAULT 0,next_review TEXT NOT NULL,last_review TEXT,created_at TEXT NOT NULL,video_url TEXT,thumbnail_url TEXT,description TEXT,platform TEXT,content_type TEXT,UNIQUE(user_id,url));
+CREATE TABLE IF NOT EXISTS reviews(id TEXT PRIMARY KEY,user_id TEXT REFERENCES users(id),content_id TEXT REFERENCES contents(id) ON DELETE CASCADE,rating TEXT NOT NULL,created_at TEXT NOT NULL,interval INTEGER NOT NULL,request_key TEXT);
+CREATE TABLE IF NOT EXISTS exercises(id TEXT PRIMARY KEY,user_id TEXT REFERENCES users(id),content_id TEXT REFERENCES contents(id) ON DELETE CASCADE,payload TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS exercise_answers(id TEXT PRIMARY KEY,user_id TEXT REFERENCES users(id),exercise_id TEXT REFERENCES exercises(id) ON DELETE CASCADE,question INTEGER,correct INTEGER,created_at TEXT,UNIQUE(user_id,exercise_id,question));
+CREATE UNIQUE INDEX IF NOT EXISTS review_request ON reviews(user_id,request_key);
+CREATE INDEX IF NOT EXISTS feed_owner_due ON contents(user_id,next_review);
+CREATE INDEX IF NOT EXISTS session_expiry ON sessions(expires);
+CREATE TABLE IF NOT EXISTS feed_sessions(user_id TEXT REFERENCES users(id) ON DELETE CASCADE,seed TEXT,ids TEXT NOT NULL,expires TEXT NOT NULL,PRIMARY KEY(user_id,seed));
+CREATE INDEX IF NOT EXISTS feed_session_expiry ON feed_sessions(expires);
+CREATE TABLE IF NOT EXISTS auth_rate_limits(key TEXT PRIMARY KEY,count INTEGER NOT NULL,expires TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS auth_rate_expiry ON auth_rate_limits(expires);

@@ -1,0 +1,15 @@
+import {forwardRef,useEffect,useImperativeHandle,useRef,useState} from 'react';
+import type {PlayerHandle,PlayerProps} from './types';
+
+export const VideoPlayer=forwardRef<PlayerHandle,PlayerProps>(function VideoPlayer({content,active,near,onState,onMuted,onWatched},ref){
+ const video=useRef<HTMLVideoElement>(null),[failed,setFailed]=useState(false),[blocked,setBlocked]=useState(false);const activity=useRef(active);activity.current=active;
+ const callbacks=useRef({onState,onMuted,onWatched});callbacks.current={onState,onMuted,onWatched};
+ async function play(){const v=video.current;if(!v||!activity.current)return;try{await v.play();setBlocked(false);}catch(e){if(activity.current&&(e as DOMException).name!=='AbortError'){setBlocked(true);callbacks.current.onState('blocked');}}}
+ useImperativeHandle(ref,()=>({toggle(){const v=video.current;if(!v)return;if(v.paused)void play();else v.pause();},toggleMute(){const v=video.current;if(v){v.muted=!v.muted;callbacks.current.onMuted(v.muted);}},pause(){video.current?.pause();}}));
+ useEffect(()=>{const v=video.current;if(!v)return;if(active){v.muted=true;callbacks.current.onMuted(true);void play();}else{v.pause();setBlocked(false);}return()=>{v.pause();};},[active]);
+ useEffect(()=>{if(!active||failed)return;const t=setTimeout(()=>{if(video.current?.readyState===0){setFailed(true);callbacks.current.onState('error');}},15000);return()=>clearTimeout(t);},[active,failed]);
+ if(failed)return <MediaFallback content={content}/>;
+ return <><video ref={video} className="feed-video" src={near?content.video_url||undefined:undefined} poster={content.thumbnail_url||undefined} preload={near?'metadata':'none'} playsInline muted controls={false} loop onClick={()=>{const v=video.current;if(v?.paused)void play();else v?.pause();}} aria-label={'Vídeo: '+content.title} onLoadedData={()=>{callbacks.current.onState('ready');if(activity.current)void play();}} onPlaying={()=>{if(!activity.current){video.current?.pause();return;}callbacks.current.onState('playing');}} onPause={()=>callbacks.current.onState('paused')} onWaiting={()=>callbacks.current.onState('loading')} onVolumeChange={()=>callbacks.current.onMuted(video.current?.muted??true)} onError={()=>{if(!near)return;setFailed(true);callbacks.current.onState('error');}} onTimeUpdate={()=>{const v=video.current;if(v&&v.currentTime>=Math.min(8,Number.isFinite(v.duration)?v.duration*.7:8))callbacks.current.onWatched();}} onEnded={()=>callbacks.current.onWatched()}/>{blocked&&active&&<button className="feed-play-prompt" onClick={()=>void play()}>Toque para reproduzir</button>}</>;
+});
+
+export function MediaFallback({content}:{content:PlayerProps['content']}){return <div className="media-fallback">{content.thumbnail_url&&<img src={content.thumbnail_url} alt={'Prévia de '+content.title}/>}<div><strong>Não foi possível reproduzir este vídeo diretamente.</strong><p>A disponibilidade é controlada pela plataforma original.</p><a href={content.source_url} target="_blank" rel="noreferrer">Assistir {['TikTok','YouTube','Instagram'].includes(content.platform)?'no '+content.platform:'na fonte original'} ↗</a></div></div>}
