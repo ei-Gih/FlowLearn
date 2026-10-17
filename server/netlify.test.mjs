@@ -1,6 +1,8 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {PGlite} from '@electric-sql/pglite';import serverless from 'serverless-http';import {createPostgresAdapter} from './postgres.mjs';import {createRemoteApp} from './remote-app.mjs';
 test('Netlify Functions com PostgreSQL: autenticação, biblioteca, revisão e persistência entre instâncias',async t=>{
- const pg=new PGlite();t.after(()=>pg.close());await pg.exec(await readFile(new URL('../netlify/database/migrations/20261017010000_englishflow.sql',import.meta.url),'utf8'));
+ const pg=new PGlite();t.after(()=>pg.close());await pg.exec(await readFile(new URL('./migrations/001_online.sql',import.meta.url),'utf8'));
+ assert.equal((await pg.query("SELECT count(*)::int AS count FROM pg_tables WHERE schemaname='public' AND tablename='users'")).rows[0].count,0);
+ const secured=await pg.query("SELECT relrowsecurity FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='englishflow' AND c.relkind='r'");assert.ok(secured.rows.length>=9);assert.ok(secured.rows.every(c=>c.relrowsecurity));
  const pool={query:(sql,values)=>pg.query(sql,values),connect:async()=>({query:(sql,values)=>pg.query(sql,values),release(){}})};
  const db=createPostgresAdapter(pool);let handler=serverless(createRemoteApp(db));
  async function call(path,method='GET',body,cookie=''){const response=await handler({path:'/api'+path,httpMethod:method,headers:{'content-type':'application/json',cookie},queryStringParameters:null,body:body?JSON.stringify(body):null,isBase64Encoded:false,requestContext:{identity:{sourceIp:'127.0.0.1'}}},{});const set=response.multiValueHeaders?.['set-cookie']?.[0]||response.headers?.['set-cookie'];return {status:response.statusCode,body:JSON.parse(response.body),cookie:set?.split(';')[0],headers:response.headers};}

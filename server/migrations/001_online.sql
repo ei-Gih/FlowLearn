@@ -1,3 +1,6 @@
+CREATE SCHEMA IF NOT EXISTS englishflow;
+REVOKE ALL ON SCHEMA englishflow FROM PUBLIC;
+SET search_path TO englishflow,pg_catalog;
 CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,email TEXT UNIQUE NOT NULL,password TEXT NOT NULL,profile TEXT NOT NULL,created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,user_id TEXT REFERENCES users(id) ON DELETE CASCADE,expires TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS resets(token TEXT PRIMARY KEY,user_id TEXT REFERENCES users(id) ON DELETE CASCADE,expires TEXT NOT NULL);
@@ -12,3 +15,14 @@ CREATE TABLE IF NOT EXISTS feed_sessions(user_id TEXT REFERENCES users(id) ON DE
 CREATE INDEX IF NOT EXISTS feed_session_expiry ON feed_sessions(expires);
 CREATE TABLE IF NOT EXISTS auth_rate_limits(key TEXT PRIMARY KEY,count INTEGER NOT NULL,expires TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS auth_rate_expiry ON auth_rate_limits(expires);
+ALTER TABLE englishflow.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE englishflow.sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE englishflow.resets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE englishflow.contents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE englishflow.reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE englishflow.exercises ENABLE ROW LEVEL SECURITY;
+ALTER TABLE englishflow.exercise_answers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE englishflow.feed_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE englishflow.auth_rate_limits ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON ALL TABLES IN SCHEMA englishflow FROM PUBLIC;
+RESET search_path;

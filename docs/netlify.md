@@ -1,16 +1,16 @@
 # Publicação na Netlify
 
-O frontend é servido pelo CDN da Netlify, e `/api/*` é encaminhado para a Function `api`. A versão online usa Netlify Database (PostgreSQL). A instalação local continua usando o SQLite existente, sem qualquer substituição de arquivos em `data/`.
+O frontend é servido pelo CDN da Netlify, e `/api/*` é encaminhado para a Function `api`. A versão online usa PostgreSQL externo (Supabase ou outro provedor compatível). A instalação local continua usando o SQLite existente, sem qualquer substituição de arquivos em `data/`.
 
 ## Configuração
 
 - Repositório: `ei-Gih/FlowLearn`, branch `main`.
 - Build: `npm run build`; publicação: `dist`; Functions: `netlify/functions`.
 - Node: 24, definido no `netlify.toml`.
-- As migrations ficam em `netlify/database/migrations`. O SDK `@netlify/database` permite provisionamento e migrations pelo ciclo de deploy da Netlify.
+- A migration inicial fica em `server/migrations/001_online.sql`. Aplique-a ao banco externo antes de liberar o acesso. As tabelas ficam no schema privado `englishflow`, separado da API pública do Supabase.
 - O banco online é um banco novo. As contas e conteúdos locais não são enviados automaticamente para a internet. No primeiro acesso online, crie sua conta.
 
-Se a equipe não oferecer Netlify Database, é necessário disponibilizar um PostgreSQL compatível ou habilitar o recurso no plano. Não publique somente os arquivos de `dist`: login e dados dependem da Function e do banco.
+A equipe pode manter o plano Free Legacy da Netlify; não é necessário ativar Netlify Database. Não publique somente os arquivos de `dist`: login e dados dependem da Function e do banco.
 
 ## Variáveis privadas opcionais
 
@@ -20,7 +20,7 @@ Configure somente no painel da Netlify, com escopo de Functions:
 - `AI_MODEL`: modelo usado pelo serviço de IA; padrão `gpt-4.1-mini`.
 - `RESET_WEBHOOK_URL`: serviço privado de envio do código de recuperação de senha.
 
-O SDK obtém a conexão do banco pela configuração do próprio projeto. Nunca adicione a conexão do banco ou chaves a variáveis `VITE_*`, ao código frontend ou ao Git.
+`DATABASE_URL` deve conter a conexão do PostgreSQL externo (pooler recomendado), configurada apenas para Functions. Se o provedor exigir um certificado raiz próprio, configure `DATABASE_CA`; a verificação de certificados permanece ativa. Nunca adicione a conexão do banco ou chaves a variáveis `VITE_*`, ao código frontend ou ao Git.
 
 ## Verificação
 
@@ -28,4 +28,4 @@ O SDK obtém a conexão do banco pela configuração do próprio projeto. Nunca 
 
 `server/netlify.test.mjs` testa a Function com PostgreSQL embutido: cadastro, login, isolamento, biblioteca, demos, revisão idempotente e continuidade das sessões e do feed entre instâncias. As revisões usam transações na mesma conexão e bloqueio da linha de conteúdo. O limite de tentativas de autenticação fica persistido no banco, além do limite por instância.
 
-O arquivo SQLite local, `.env`, logs e estado de autenticação das ferramentas não são publicados. O Netlify Database consome os recursos/créditos previstos no plano da equipe; mudanças de plano ou habilitação de cobrança automática precisam ser feitas pelo titular.
+O arquivo SQLite local, `.env`, logs e estado de autenticação das ferramentas não são publicados. O banco externo segue os limites do plano contratado no seu provedor. O plano existente da Netlify é preservado.
