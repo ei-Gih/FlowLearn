@@ -5,8 +5,8 @@ export function createRemoteApp(db) {
     app.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
     app.use(helmet({ referrerPolicy: { policy: 'strict-origin-when-cross-origin' }, crossOriginEmbedderPolicy: false, contentSecurityPolicy: { directives: { defaultSrc: ["'self'"], scriptSrc: ["'self'", 'https://www.youtube.com', 'https://s.ytimg.com'], styleSrc: ["'self'", "'unsafe-inline'"], imgSrc: ["'self'", "data:", 'https:', 'http:'], mediaSrc: ["'self'", 'https:', 'http:'], frameSrc: ['https://www.youtube-nocookie.com', 'https://www.youtube.com', 'https://www.tiktok.com'] } } }));
     app.use(express.json({ limit: '100kb' }));
-    app.use('/api', rateLimit({ windowMs: 60000, limit: 180 }));
-    app.use('/api/auth', rateLimit({ windowMs: 900000, limit: 40 }));
+    app.use('/api', rateLimit({ windowMs: 60000, limit: 180, keyGenerator: req => String(req.headers['x-nf-client-connection-ip'] || req.ip || 'unknown') }));
+    app.use('/api/auth', rateLimit({ windowMs: 900000, limit: 40, keyGenerator: req => String(req.headers['x-nf-client-connection-ip'] || req.ip || 'unknown') }));
     app.get('/api/health', async (req, res) => { await db.prepare('SELECT 1 AS ok').get(); res.json({ ok: true }); });
     app.use('/api/auth', async (req, res, next) => { const time = Date.now(), bucket = Math.floor(time / 900000), key = createHash('sha256').update(String(req.headers['x-nf-client-connection-ip'] || req.ip) + ':' + bucket).digest('hex'); const counter = await db.prepare('INSERT INTO auth_rate_limits(key,count,expires) VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET count=auth_rate_limits.count+1 RETURNING count').get(key, new Date(time + 900000).toISOString()); if (counter.count > 40)
         return res.status(429).json({ error: 'Muitas tentativas. Aguarde alguns minutos para tentar novamente.' }); next(); });
@@ -130,3 +130,4 @@ async function getSmartFeed(db,userId,{limit,offset,seed},pack){
  if(!snapshot){const ids=JSON.stringify(smartOrder(items,seed).map(c=>c.id));await db.prepare('INSERT INTO feed_sessions(user_id,seed,ids,expires) VALUES(?,?,?,?) ON CONFLICT(user_id,seed) DO UPDATE SET ids=EXCLUDED.ids,expires=EXCLUDED.expires').run(userId,seed,ids,new Date(Date.now()+3600000).toISOString());snapshot={ids};await db.prepare('DELETE FROM feed_sessions WHERE expires<?').run(time);}
  const byId=new Map(items.map(c=>[c.id,c])),ordered=JSON.parse(snapshot.ids).map(id=>byId.get(id)).filter(Boolean);return {items:ordered.slice(offset,offset+limit),total:ordered.length,due_count:items.filter(c=>isDueToday(c)).length,has_more:offset+limit<ordered.length,next_offset:Math.min(offset+limit,ordered.length),seed};
 }
+
